@@ -26,7 +26,7 @@ class Data(object):
             [1,0,0]
         ]
 
-    Assignments = [1, 1, 1, 2, 2, 2]
+    Assignments = [0, 0, 0, 1, 1, 1]
 
     Test_Stilmuli = [
             [[0,1,1],[1,1,1]],

@@ -1,7 +1,7 @@
 
 run: diva.py
-	python diva.py
+	python3 diva.py
 
 clean:
-	rm -rf *.pyc
+	rm -rf *.pyc __pycache__
 

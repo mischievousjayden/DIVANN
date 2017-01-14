@@ -15,18 +15,18 @@ n_input = 3
 n_hidden = 8
 
 # tf graph input
-X = tf.placeholder("float", [None, num_features])
+X = tf.placeholder("float", [None, num_features], name="x-input")
 
 weights = {
-    "encoder": tf.Variable(tf.random_normal([num_features, num_hidden])),
-    "decoder1": tf.Variable(tf.random_normal([num_hidden, num_features])),
-    "decoder2": tf.Variable(tf.random_normal([num_hidden, num_features]))
+    "encoder": tf.Variable(tf.random_normal([num_features, num_hidden]), name="encoder"),
+    "decoder1": tf.Variable(tf.random_normal([num_hidden, num_features]), name="decoder1"),
+    "decoder2": tf.Variable(tf.random_normal([num_hidden, num_features]), name="decoder2")
 }
 
 biases = {
-    "encoder": tf.Variable(tf.random_normal([num_hidden])),
-    "decoder1": tf.Variable(tf.random_normal([num_features])),
-    "decoder2": tf.Variable(tf.random_normal([num_features]))
+    "encoder": tf.Variable(tf.random_normal([num_hidden]), name="encoder"),
+    "decoder1": tf.Variable(tf.random_normal([num_features]), name="decoder1"),
+    "decoder2": tf.Variable(tf.random_normal([num_features]), name="decoder2")
 }
 
 # building the encoder
@@ -44,8 +44,11 @@ def getPrediction(outputs, current_class):
     return outputs[current_class]
 
 # construct model
-encoder_op = encode(X)
-decoder_op = decodeToMultiDim(encoder_op)
+with tf.name_scope("encoder_layer") as scope:
+    encoder_op = encode(X)
+
+with tf.name_scope("decoder_layer") as scope:
+    decoder_op = decodeToMultiDim(encoder_op)
 
 # prediction
 current_class = tf.placeholder(tf.int32)
@@ -54,23 +57,44 @@ y_pred = tf.cond(current_class > 0 , lambda: decoder_op[1], lambda: decoder_op[0
 # target
 y_true = X
 
-# define loss and optimizer, minimize the squared error
-learning_rate = 0.01
-cost = tf.reduce_mean(tf.pow(y_true - y_pred, 2))
-optimizer = tf.train.RMSPropOptimizer(learning_rate).minimize(cost)
+# define cost
+with tf.name_scope("cost") as scope:
+    cost = tf.reduce_mean(tf.pow(y_true - y_pred, 2))
+    cost_summ = tf.scalar_summary("cost", cost)
+
+# Minimize
+with tf.name_scope("train") as scope:
+    learning_rate = 0.01
+    optimizer = tf.train.RMSPropOptimizer(learning_rate).minimize(cost)
+
+# histogram
+w_encoder_hist = tf.histogram_summary("weight_encoder", weights["encoder"])
+w_decoder1_hist = tf.histogram_summary("weight_decoder1", weights["decoder1"])
+w_decoder2_hist = tf.histogram_summary("weight_decoder2", weights["decoder2"])
+
+b_encoder_hist = tf.histogram_summary("bias_encoder", biases["encoder"])
+b_decoder1_hist = tf.histogram_summary("bias_decoder1", biases["decoder1"])
+b_decoder2_hist = tf.histogram_summary("bias_decoder2", biases["decoder2"])
+
+y_hist = tf.histogram_summary("prediction", y_pred)
 
 # initializing the variables
 init = tf.initialize_all_variables()
 
-sess = tf.InteractiveSession()
-sess.run(init)
 
-for i in range(total_batch):
-    for epoch in range(training_epochs):
-        for j, current_input in enumerate(Data.Stimuli[i]):
-            _, c = sess.run([optimizer, cost], feed_dict={X:[current_input], current_class:Data.Assignments[j]})
-            if epoch % display_step == 0:
-                # print(sess.run([X, encoder_op], feed_dict={X:[current_input]}))
-                print("input:", i, "Epoch:", ' %04d' % (epoch+1), "cost=", "{:.9f}".format(c), "label=", Data.Assignments[j])
-print("Optimization Finished!")
+with tf.Session() as sess:
+    merged = tf.merge_all_summaries()
+    writer = tf.train.SummaryWriter("./logs/diva", sess.graph_def)
+
+    sess.run(init)
+
+    for i in range(total_batch):
+        for epoch in range(training_epochs):
+            for j, current_input in enumerate(Data.Stimuli[i]):
+                _, c = sess.run([optimizer, cost], feed_dict={X:[current_input], current_class:Data.Assignments[j]})
+                if epoch % display_step == 0:
+                    summary = sess.run(merged, feed_dict={X:[current_input], current_class:Data.Assignments[j]})
+                    writer.add_summary(summary, epoch)
+                    print("input:", i, "Epoch:", ' %04d' % (epoch+1), "cost=", "{:.9f}".format(c), "label=", Data.Assignments[j])
+    print("Optimization Finished!")
 

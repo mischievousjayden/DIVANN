@@ -1,6 +1,6 @@
 import tensorflow as tf
 
-from data import Data 
+from data import Data
 
 # parameters
 num_set_inputs = 13
@@ -40,7 +40,7 @@ def decodeToMultiDim(x):
     output2 = tf.nn.sigmoid(tf.add(tf.matmul(x, weights["decoder2"]), biases["decoder2"]))
     return [output1, output2]
 
-def resposeRule(outputs, label, beta):
+def responseRule(outputs, label, beta):
     o1 = tf.pow(outputs[0] - label, [2, 2, 2])
     o2 = tf.pow(outputs[1] - label, [2, 2, 2])
     ssqerror = [o1, o2]
@@ -69,7 +69,7 @@ y_true = X
 
 # accuracy
 with tf.name_scope("accuracy") as scope:
-    accuracy_vec = resposeRule(decoder_op, X, beta)
+    accuracy_vec = responseRule(decoder_op, X, beta)
     accuracy = tf.cond(current_class > 0 , lambda: accuracy_vec[1], lambda: accuracy_vec[0])
     accuracy_summ = tf.scalar_summary("accuracy", accuracy)
 
@@ -112,4 +112,3 @@ with tf.Session() as sess:
                     writer.add_summary(summary, epoch)
                     print("input_set: {}".format(i), "Epoch: {}".format(epoch+1), "cost: {:.9f}".format(c), "accuracy={:.9f}".format(a), "label={}".format(Data.Assignments[j]))
     print("Optimization Finished!")
-

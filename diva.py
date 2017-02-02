@@ -18,15 +18,15 @@ beta = 0.8
 X = tf.placeholder("float", [None, num_features], name="x-input")
 
 weights = {
-    "encoder": tf.Variable(tf.random_normal([num_features, num_hidden]), name="encoder"),
-    "decoder1": tf.Variable(tf.random_normal([num_hidden, num_features]), name="decoder1"),
-    "decoder2": tf.Variable(tf.random_normal([num_hidden, num_features]), name="decoder2")
+    "encoder": tf.Variable(tf.random_normal([num_features, num_hidden]), name="encoder_weight"),
+    "decoder1": tf.Variable(tf.random_normal([num_hidden, num_features]), name="decoder_weight1"),
+    "decoder2": tf.Variable(tf.random_normal([num_hidden, num_features]), name="decoder_weight2")
 }
 
 biases = {
-    "encoder": tf.Variable(tf.random_normal([num_hidden]), name="encoder"),
-    "decoder1": tf.Variable(tf.random_normal([num_features]), name="decoder1"),
-    "decoder2": tf.Variable(tf.random_normal([num_features]), name="decoder2")
+    "encoder": tf.Variable(tf.random_normal([num_hidden]), name="encoder_bias"),
+    "decoder1": tf.Variable(tf.random_normal([num_features]), name="decoder_bias1"),
+    "decoder2": tf.Variable(tf.random_normal([num_features]), name="decoder_bias2")
 }
 
 # building the encoder

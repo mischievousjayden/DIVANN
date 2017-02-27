@@ -4,6 +4,7 @@ from data import Data
 import diva
 from diva import DIVANN
 
+
 def main():
     # parameters
     num_set_inputs = 13
@@ -14,25 +15,24 @@ def main():
     num_features = 3
     num_hidden = 8
     num_classes = 2
-
-    # response rule beta
     beta = 0.8
+    divann = DIVANN(num_features, num_hidden, num_classes, beta)
 
     # tf graph input
     X = tf.placeholder("float", [None, num_features], name="x-input")
-    divann = DIVANN(num_features, num_hidden, num_classes)
-
-    decoder_op = divann.run(X)
-    # prediction
-    current_class = tf.placeholder(tf.int32)
-    y_pred = tf.cond(current_class > 0 , lambda: decoder_op[1], lambda: decoder_op[0])
-
-    # target
     y_true = X
+
+    # diva output
+    with tf.name_scope("diva_outputs") as scope:
+        decoder_op, accuracy_vec = divann.run(X)
+
+    # prediction
+    with tf.name_scope("prediction") as scope:
+        current_class = tf.placeholder(tf.int32)
+        y_pred = tf.cond(current_class > 0 , lambda: decoder_op[1], lambda: decoder_op[0])
 
     # accuracy
     with tf.name_scope("accuracy") as scope:
-        accuracy_vec = diva.responseRule(decoder_op, X, beta)
         accuracy = tf.cond(current_class > 0 , lambda: accuracy_vec[1], lambda: accuracy_vec[0])
         accuracy_summ = tf.scalar_summary("accuracy", accuracy)
 
@@ -46,11 +46,8 @@ def main():
         learning_rate = 0.01
         optimizer = tf.train.RMSPropOptimizer(learning_rate).minimize(cost)
 
-    y_hist = tf.histogram_summary("prediction", y_pred)
-
     # initializing the variables
     init = tf.initialize_all_variables()
-
     with tf.Session() as sess:
         merged = tf.merge_all_summaries()
 

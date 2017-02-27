@@ -2,10 +2,11 @@ import tensorflow as tf
 
 
 class DIVANN:
-    def __init__(self, num_features, num_hidden, num_classes=1):
+    def __init__(self, num_features, num_hidden, num_classes=1, beta=1.0):
         self._num_features = num_features
         self._num_hidden = num_hidden
         self._num_classes = num_classes
+        self._beta = beta
 
         self._encoder = {
             "weight": tf.Variable(tf.random_normal([num_features, num_hidden]), name="encoder_weight"),
@@ -31,15 +32,22 @@ class DIVANN:
             self._decode = list()
             for i in range(self._num_classes):
                 self._decode.append(tf.nn.sigmoid(tf.add(tf.matmul(self._encode, self._decoder["weights"][i]), self._decoder["biases"][i])))
-        return self._decode
-        
-def responseRule(outputs, label, beta):
-    o1 = tf.pow(outputs[0] - label, [2, 2, 2])
-    o2 = tf.pow(outputs[1] - label, [2, 2, 2])
-    ssqerror = [o1, o2]
-    diversities = tf.exp(beta*(tf.abs(outputs[0] - outputs[1])))
-    fweights = tf.nn.softmax(diversities)
-    accuracy1 = 1.0 / tf.reduce_sum(tf.mul(o1, fweights))
-    accuracy2 = 1.0 / tf.reduce_sum(tf.mul(o2, fweights))
-    return tf.nn.softmax([accuracy1, accuracy2])
+        return self._decode, self.get_response_rule(x)
+
+    def get_response_rule(self, x):
+        ssqerror = tf.pow(tf.sub(self._decode, x), 2)
+        diversities = tf.exp(self._beta*tf.reduce_mean(tf.abs(self._pdiff(self._decode)), 0))
+        fweights = tf.div(diversities, tf.reduce_sum(diversities))
+        ssqerror = tf.reduce_sum(tf.mul(ssqerror, fweights), 2)
+        ssqerror = tf.reshape(ssqerror, [-1])
+        ssqerror = tf.div(1.0, ssqerror)
+        ps = tf.div(ssqerror, tf.reduce_sum(ssqerror))
+        return ps
+
+    def _pdiff(self, m):
+        result = list()
+        for i in range(self._num_classes):
+            for j in range(i+1,self._num_classes):
+                result.append(m[i]-m[j])
+        return result
 

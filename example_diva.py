@@ -19,7 +19,7 @@ def main():
 
     # parameters
     num_set_inputs = 13
-    training_epochs = 100
+    training_epochs = 25
     display_step = 5
 
     # network parameters
@@ -74,15 +74,15 @@ def main():
             for epoch in range(training_epochs):
                 for j, current_input in enumerate(Data.Stimuli[i]):
                     _, c, a = sess.run([optimizer, cost, accuracy], feed_dict={X:[current_input], current_class:Data.Assignments[j]})
-                    sum_cost = sum_cost + c
                     if epoch == training_epochs-1:
                         sum_acc = sum_acc + a
                     if epoch % display_step == display_step-1:
+                        sum_cost = sum_cost + (1-a)
                         summary = sess.run(merged, feed_dict={X:[current_input], current_class:Data.Assignments[j]})
                         writer.add_summary(summary, epoch)
                         print("input_set: {}".format(i), "Epoch: {}".format(epoch+1), "cost: {:.9f}".format(c), "accuracy={:.9f}".format(a), "label={}".format(Data.Assignments[j]))
             avg_acc.append(sum_acc / len(Data.Stimuli[0]))
-            cumulative_cost.append(sum_cost)
+            cumulative_cost.append(sum_cost / len(Data.Stimuli[0]))
         print("Optimization Finished!")
         avg_acc = np.array(avg_acc)
         rank = np.absolute(avg_acc.argsort().argsort()-len(avg_acc))

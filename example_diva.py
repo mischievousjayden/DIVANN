@@ -4,6 +4,7 @@ from data import Data
 import diva
 from diva import DIVANN
 
+import pdb
 
 def main():
     # parameters
@@ -46,6 +47,8 @@ def main():
         learning_rate = 0.01
         optimizer = tf.train.RMSPropOptimizer(learning_rate).minimize(cost)
 
+    result_avg = list()
+
     # initializing the variables
     init = tf.initialize_all_variables()
     with tf.Session() as sess:
@@ -55,14 +58,19 @@ def main():
             logfilename = "./logs/set{}".format(i)
             writer = tf.train.SummaryWriter(logfilename, sess.graph_def)
             sess.run(init)
+            current_sum = 0
             for epoch in range(training_epochs):
                 for j, current_input in enumerate(Data.Stimuli[i]):
                     _, c, a = sess.run([optimizer, cost, accuracy], feed_dict={X:[current_input], current_class:Data.Assignments[j]})
-                    if epoch % display_step == 0:
+                    if epoch == training_epochs-1:
+                        current_sum = current_sum + a
+                    if epoch % display_step == display_step-1:
                         summary = sess.run(merged, feed_dict={X:[current_input], current_class:Data.Assignments[j]})
                         writer.add_summary(summary, epoch)
                         print("input_set: {}".format(i), "Epoch: {}".format(epoch+1), "cost: {:.9f}".format(c), "accuracy={:.9f}".format(a), "label={}".format(Data.Assignments[j]))
+            result_avg.append(current_sum / len(Data.Stimuli[0]))
         print("Optimization Finished!")
+        print(result_avg)
 
 if __name__ == "__main__":
     main()

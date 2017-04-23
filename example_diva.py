@@ -1,12 +1,22 @@
+import argparse
+import numpy as np
+import pandas as pd
 import tensorflow as tf
 
 from data import Data
-import diva
 from diva import DIVANN
 
-import pdb
 
 def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("beta", help="beta", type=float)
+    parser.add_argument("learning_rate", help="learning rate", type=float)
+    parser.add_argument("num_hidden", help="number of neurons in hidden layer", type=int)
+    parser.add_argument("result_filename", help="result file name")
+
+    args = parser.parse_args()
+    result_filename = args.result_filename
+
     # parameters
     num_set_inputs = 13
     training_epochs = 100
@@ -14,9 +24,10 @@ def main():
 
     # network parameters
     num_features = 3
-    num_hidden = 8
+    num_hidden = args.num_hidden # 8
     num_classes = 2
-    beta = 0.8
+    beta = args.beta # 0.8
+    learning_rate = args.learning_rate # 0.01
     divann = DIVANN(num_features, num_hidden, num_classes, beta)
 
     # tf graph input
@@ -44,10 +55,10 @@ def main():
 
     # Minimize
     with tf.name_scope("train") as scope:
-        learning_rate = 0.01
         optimizer = tf.train.RMSPropOptimizer(learning_rate).minimize(cost)
 
-    result_avg = list()
+    avg_acc = list()
+    cumulative_cost = list()
 
     # initializing the variables
     init = tf.initialize_all_variables()
@@ -58,19 +69,30 @@ def main():
             logfilename = "./logs/set{}".format(i)
             writer = tf.train.SummaryWriter(logfilename, sess.graph_def)
             sess.run(init)
-            current_sum = 0
+            sum_acc = 0
+            sum_cost = 0
             for epoch in range(training_epochs):
                 for j, current_input in enumerate(Data.Stimuli[i]):
                     _, c, a = sess.run([optimizer, cost, accuracy], feed_dict={X:[current_input], current_class:Data.Assignments[j]})
+                    sum_cost = sum_cost + c
                     if epoch == training_epochs-1:
-                        current_sum = current_sum + a
+                        sum_acc = sum_acc + a
                     if epoch % display_step == display_step-1:
                         summary = sess.run(merged, feed_dict={X:[current_input], current_class:Data.Assignments[j]})
                         writer.add_summary(summary, epoch)
                         print("input_set: {}".format(i), "Epoch: {}".format(epoch+1), "cost: {:.9f}".format(c), "accuracy={:.9f}".format(a), "label={}".format(Data.Assignments[j]))
-            result_avg.append(current_sum / len(Data.Stimuli[0]))
+            avg_acc.append(sum_acc / len(Data.Stimuli[0]))
+            cumulative_cost.append(sum_cost)
         print("Optimization Finished!")
-        print(result_avg)
+        avg_acc = np.array(avg_acc)
+        rank = np.absolute(avg_acc.argsort().argsort()-len(avg_acc))
+        cumulative_cost = np.array(cumulative_cost)
+        df = pd.DataFrame()
+        df["cumulative_cost"] = cumulative_cost
+        df["avg_acc"] = avg_acc
+        df["rank"] = rank
+        df.to_csv(result_filename, sep=',', index=False)
+        print(df)
 
 if __name__ == "__main__":
     main()

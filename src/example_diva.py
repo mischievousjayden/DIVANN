@@ -10,6 +10,27 @@ from diva.diva_origin import DIVANN
 import pdb
 
 
+def write_log(encoder_info, decoder_info, dirname, prefix):
+    df_encoder_weight = pd.DataFrame(encoder_info["weight"])
+    df_encoder_weight.to_csv("{}/{}_encoder_weight.csv".format(dirname, prefix), sep=',', index=False)
+
+    df_encoder_bias = pd.DataFrame(encoder_info["bias"])
+    df_encoder_bias.to_csv("{}/{}_encoder_bias.csv".format(dirname, prefix), sep=',', index=False)
+
+
+    df_decoder_weight1 = pd.DataFrame(decoder_info["weights"][0])
+    df_decoder_weight1.to_csv("{}/{}_decoder1_weight.csv".format(dirname, prefix), sep=',', index=False)
+
+    df_decoder_bias1 = pd.DataFrame(decoder_info["biases"][0])
+    df_decoder_bias1.to_csv("{}/{}_decoder1_bias.csv".format(dirname, prefix), sep=',', index=False)
+
+    df_decoder_weight2 = pd.DataFrame(decoder_info["weights"][1])
+    df_decoder_weight2.to_csv("{}/{}_decoder2_weight.csv".format(dirname, prefix), sep=',', index=False)
+
+    df_decoder_bias2 = pd.DataFrame(decoder_info["biases"][1])
+    df_decoder_bias2.to_csv("{}/{}_decoder2_bias.csv".format(dirname, prefix), sep=',', index=False)
+
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("beta", help="beta", type=float)
@@ -22,7 +43,7 @@ def main():
 
     # parameters
     num_set_inputs = 13
-    training_epochs = 150 #25
+    training_epochs = 25
     display_step = 5
 
     # network parameters
@@ -80,6 +101,11 @@ def main():
                 temp_sum_cost = 0
                 for j, current_input in enumerate(Data.Stimuli[i]):
                     _, c, a = sess.run([optimizer, cost, accuracy], feed_dict={X:[current_input], current_class:Data.Assignments[j]})
+                    # weight log
+                    encoder_info = sess.run(divann._encoder)
+                    decoder_info = sess.run(divann._decoder)
+                    write_log(encoder_info, decoder_info, "./weight_log", "{}_{}_{}".format(i, epoch, j))
+ 
                     temp_sum_cost = temp_sum_cost + (1-a)
                     if epoch == training_epochs-1:
                         sum_acc = sum_acc + a

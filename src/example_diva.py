@@ -2,9 +2,12 @@ import argparse
 import numpy as np
 import pandas as pd
 import tensorflow as tf
+import matplotlib.pyplot as plt
 
 from data import Data
-from diva import DIVANN
+from diva.diva_origin import DIVANN
+
+import pdb
 
 
 def main():
@@ -19,7 +22,7 @@ def main():
 
     # parameters
     num_set_inputs = 13
-    training_epochs = 25
+    training_epochs = 150 #25
     display_step = 5
 
     # network parameters
@@ -62,6 +65,7 @@ def main():
 
     # initializing the variables
     init = tf.initialize_all_variables()
+    df_cost = pd.DataFrame()
     with tf.Session() as sess:
         merged = tf.merge_all_summaries()
 
@@ -71,9 +75,12 @@ def main():
             sess.run(init)
             sum_acc = 0
             sum_cost = 0
+            cost_list = list()
             for epoch in range(training_epochs):
+                temp_sum_cost = 0
                 for j, current_input in enumerate(Data.Stimuli[i]):
                     _, c, a = sess.run([optimizer, cost, accuracy], feed_dict={X:[current_input], current_class:Data.Assignments[j]})
+                    temp_sum_cost = temp_sum_cost + (1-a)
                     if epoch == training_epochs-1:
                         sum_acc = sum_acc + a
                     if epoch % display_step == display_step-1:
@@ -81,9 +88,23 @@ def main():
                         summary = sess.run(merged, feed_dict={X:[current_input], current_class:Data.Assignments[j]})
                         writer.add_summary(summary, epoch)
                         print("input_set: {}".format(i), "Epoch: {}".format(epoch+1), "cost: {:.9f}".format(c), "accuracy={:.9f}".format(a), "label={}".format(Data.Assignments[j]))
+                cost_list.append(temp_sum_cost / len(Data.Stimuli[i]))
+            df_cost["stimuli{}".format(i)] = np.array(cost_list)
             avg_acc.append(sum_acc / len(Data.Stimuli[0]))
             cumulative_cost.append(sum_cost / len(Data.Stimuli[0]))
         print("Optimization Finished!")
+        # plot
+        columns = df_cost.columns.tolist()
+        for i, col in enumerate(columns):
+            data = df_cost[col].tolist()
+            plt.plot(range(len(data)), data, label=col)
+        plt.title("this is title")
+        plt.xlabel("Iterations")
+        plt.ylabel("Loss")
+        plt.legend()
+        # plt.show()
+        plt.savefig("plot_name.png")
+
         avg_acc = np.array(avg_acc)
         rank = np.absolute(avg_acc.argsort().argsort()-len(avg_acc))
         cumulative_cost = np.array(cumulative_cost)

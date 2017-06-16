@@ -42,12 +42,12 @@ def main():
     result_filename = args.result_filename
 
     # parameters
-    num_set_inputs = 13
+    num_set_inputs = len(Data.Stimuli)
     training_epochs = 25
     display_step = 5
 
     # network parameters
-    num_features = 3
+    num_features = len(Data.Stimuli[0][0]) # 3
     num_hidden = args.num_hidden # 8
     num_classes = 2
     beta = args.beta # 0.8

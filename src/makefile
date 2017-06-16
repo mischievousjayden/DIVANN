@@ -6,5 +6,5 @@ run_tensorboard:
 	tensorboard --logdir=logs/set1
 
 clean:
-	rm -rf *.pyc __pycache__ logs weight_log/*.csv *.png *.csv
+	rm -rf *.pyc __pycache__ logs weight_log/*.csv *.png *.csv same_weight.txt
 

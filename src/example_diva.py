@@ -50,7 +50,7 @@ def compare_df(df1, df2):
     same = (df1-df2).abs() < 0.0000001
     return False if same.sum().sum() == 0 else True
 
-def compare_weights(pre_encoder_info, pre_decoder_info, encoder_info, decoder_info, message):
+def compare_weights(label, pre_encoder_info, pre_decoder_info, encoder_info, decoder_info, message):
 
     if pre_encoder_info is None:
         return
@@ -67,25 +67,27 @@ def compare_weights(pre_encoder_info, pre_decoder_info, encoder_info, decoder_in
     if compare_df(df_pre_encoder_bias, df_encoder_bias):
         logger.println("{}_encoder_bias".format(message))
 
-    df_pre_decoder_weight1 = pd.DataFrame(pre_decoder_info["weights"][0])
-    df_decoder_weight1 = pd.DataFrame(decoder_info["weights"][0])
-    if compare_df(df_pre_decoder_weight1, df_decoder_weight1):
-        logger.println("{}_decoder1_weight".format(message))
+    if label == 0:
+        df_pre_decoder_weight1 = pd.DataFrame(pre_decoder_info["weights"][0])
+        df_decoder_weight1 = pd.DataFrame(decoder_info["weights"][0])
+        if compare_df(df_pre_decoder_weight1, df_decoder_weight1):
+            logger.println("{}_decoder1_weight".format(message))
 
-    df_pre_decoder_bias1 = pd.DataFrame(pre_decoder_info["biases"][0])
-    df_decoder_bias1 = pd.DataFrame(decoder_info["biases"][0])
-    if compare_df(df_pre_decoder_bias1, df_decoder_bias1):
-        logger.println("{}_decoder1_bias".format(message))
+        df_pre_decoder_bias1 = pd.DataFrame(pre_decoder_info["biases"][0])
+        df_decoder_bias1 = pd.DataFrame(decoder_info["biases"][0])
+        if compare_df(df_pre_decoder_bias1, df_decoder_bias1):
+            logger.println("{}_decoder1_bias".format(message))
 
-    df_pre_decoder_weight2 = pd.DataFrame(pre_decoder_info["weights"][1])
-    df_decoder_weight2 = pd.DataFrame(decoder_info["weights"][1])
-    if compare_df(df_pre_decoder_weight2, df_decoder_weight2):
-        logger.println("{}_decoder2_weight".format(message))
+    else:
+        df_pre_decoder_weight2 = pd.DataFrame(pre_decoder_info["weights"][1])
+        df_decoder_weight2 = pd.DataFrame(decoder_info["weights"][1])
+        if compare_df(df_pre_decoder_weight2, df_decoder_weight2):
+            logger.println("{}_decoder2_weight".format(message))
 
-    df_pre_decoder_bias2 = pd.DataFrame(pre_decoder_info["biases"][1])
-    df_decoder_bias2 = pd.DataFrame(decoder_info["biases"][1])
-    if compare_df(df_pre_decoder_bias2, df_decoder_bias2):
-        logger.println("{}_decoder2_bias".format(message))
+        df_pre_decoder_bias2 = pd.DataFrame(pre_decoder_info["biases"][1])
+        df_decoder_bias2 = pd.DataFrame(decoder_info["biases"][1])
+        if compare_df(df_pre_decoder_bias2, df_decoder_bias2):
+            logger.println("{}_decoder2_bias".format(message))
 
 
 def main():
@@ -147,12 +149,6 @@ def main():
     with tf.Session() as sess:
         merged = tf.merge_all_summaries()
 
-        encoder_info = None
-        decoder_info = None
-        
-        pre_encoder_info = None
-        pre_decoder_info = None
-
         for i in range(num_set_inputs):
             logfilename = "./logs/set{}".format(i)
             writer = tf.train.SummaryWriter(logfilename, sess.graph_def)
@@ -160,6 +156,13 @@ def main():
             sum_acc = 0
             sum_cost = 0
             cost_list = list()
+
+            encoder_info = None
+            decoder_info = None
+            
+            pre_encoder_info = None
+            pre_decoder_info = None
+
             for epoch in range(training_epochs):
                 temp_sum_cost = 0
                 for j, current_input in enumerate(Data.Stimuli[i]):
@@ -173,7 +176,7 @@ def main():
 
                     write_log(encoder_info, decoder_info, "./weight_log", "{}_{}_{}".format(i, epoch, j))
 
-                    compare_weights(pre_encoder_info, pre_decoder_info, encoder_info, decoder_info, "{}_{}_{}".format(i, epoch, j))
+                    compare_weights(Data.Assignments[j], pre_encoder_info, pre_decoder_info, encoder_info, decoder_info, "{}_{}_{}".format(i, epoch, j))
  
                     temp_sum_cost = temp_sum_cost + (1-a)
                     if epoch == training_epochs-1:

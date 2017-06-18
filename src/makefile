@@ -1,6 +1,6 @@
 
 run:
-	python3 example_diva.py 0.8 0.15 8 result1.csv
+	python3 example_diva.py 0.8 0.15 8 result1
 
 run_tensorboard:
 	tensorboard --logdir=logs/set1

@@ -201,7 +201,7 @@ def main():
         plt.ylabel("Loss")
         plt.legend()
         # plt.show()
-        plt.savefig("plot_name.png")
+        plt.savefig("{}.png".format(result_filename))
 
         avg_acc = np.array(avg_acc)
         rank = np.absolute(avg_acc.argsort().argsort()-len(avg_acc))
@@ -210,7 +210,8 @@ def main():
         df["cumulative_cost"] = cumulative_cost
         df["avg_acc"] = avg_acc
         df["rank"] = rank
-        df.to_csv(result_filename, sep=',', index=False)
+        # df.to_csv(result_filename, sep=',', index=False)
+        df.to_csv("{}.csv".format(result_filename), sep=',', index=False)
         print(df)
 
 if __name__ == "__main__":

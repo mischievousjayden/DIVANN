@@ -2,27 +2,39 @@ import tensorflow as tf
 
 
 class DIVANN:
-    def __init__(self, num_features, num_hidden, num_classes=1, beta=1.0):
+    def __init__(self, num_features, num_hidden, weight_range=(0.0, 1.0), num_classes=1, beta=1.0):
         self._num_features = num_features
         self._num_hidden = num_hidden
         self._num_classes = num_classes
         self._beta = beta
 
         self._encoder = {
-            "weight": tf.Variable(tf.random_normal([num_features, num_hidden]), name="encoder_weight"),
-            "bias": tf.Variable(tf.random_normal([num_hidden]), name="encoder_bias")
+            "weight": tf.Variable(tf.random_uniform([num_features, num_hidden], minval=weight_range[0], maxval=weight_range[1]), name="encoder_weight"),
+            "bias": tf.Variable(tf.random_uniform([num_hidden], minval=weight_range[0], maxval=weight_range[1]), name="encoder_bias")
         }
 
         self._decoder = {
-            "weights": tf.Variable(tf.random_normal([num_classes, num_hidden, num_features]), name="decoder_weights"),
-            "biases": tf.Variable(tf.random_normal([num_classes, num_features]), name="decoder_biases")
+            "weights": tf.Variable(tf.random_uniform([num_classes, num_hidden, num_features], minval=weight_range[0], maxval=weight_range[1]), name="decoder_weights"),
+            "biases": tf.Variable(tf.random_uniform([num_classes, num_features], minval=weight_range[0], maxval=weight_range[1]), name="decoder_biases")
         }
 
-        self._histogram = list()
-        self._histogram.append(tf.histogram_summary("encoder_weight", self._encoder["weight"]))
-        self._histogram.append(tf.histogram_summary("encoder_bias", self._encoder["bias"]))
-        self._histogram.append(tf.histogram_summary("decoder_weights", self._decoder["weights"]))
-        self._histogram.append(tf.histogram_summary("decoder_biases", self._decoder["biases"]))
+
+        # self._encoder = {
+        #     "weight": tf.Variable(tf.random_normal([num_features, num_hidden]), name="encoder_weight"),
+        #     "bias": tf.Variable(tf.random_normal([num_hidden]), name="encoder_bias")
+        # }
+        #
+        # self._decoder = {
+        #     "weights": tf.Variable(tf.random_normal([num_classes, num_hidden, num_features]), name="decoder_weights"),
+        #     "biases": tf.Variable(tf.random_normal([num_classes, num_features]), name="decoder_biases")
+        # }
+
+
+        # self._histogram = list()
+        # self._histogram.append(tf.histogram_summary("encoder_weight", self._encoder["weight"]))
+        # self._histogram.append(tf.histogram_summary("encoder_bias", self._encoder["bias"]))
+        # self._histogram.append(tf.histogram_summary("decoder_weights", self._decoder["weights"]))
+        # self._histogram.append(tf.histogram_summary("decoder_biases", self._decoder["biases"]))
 
     def run(self, x):
         with tf.name_scope("encode") as scope:

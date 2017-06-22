@@ -1,10 +1,8 @@
+LOGDIR=logs
 
 run:
-	python3 example_diva.py 0.8 0.15 8 result1
-
-run_tensorboard:
-	tensorboard --logdir=logs/set1
+	python3 diva_example.py ${LOGDIR}
 
 clean:
-	rm -rf *.pyc __pycache__ logs weight_log/*.csv *.png *.csv same_weight.txt
+	rm -rf *.pyc __pycache__ diva/__pycache__ ${LOGDIR}
 

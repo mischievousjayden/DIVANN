@@ -203,12 +203,14 @@ def diva_sample(learning_rate, num_hidden, weight_range, beta, logdir):
         rank = np.append(rank, 0)
         avg_acc = np.append(avg_acc, np.mean(avg_acc))
         cumulative_cost = np.append(cumulative_cost, np.mean(cumulative_cost))
+        df_cost.to_csv("{}_cost.csv".format(result_filename), sep=',', index=False)
+
         df = pd.DataFrame()
         df["cumulative_cost"] = cumulative_cost
         df["avg_acc"] = avg_acc
         df["rank"] = rank
         # df.to_csv(result_filename, sep=',', index=False)
-        df.to_csv("{}.csv".format(result_filename), sep=',', index=False)
+        df.to_csv("{}_result.csv".format(result_filename), sep=',', index=False)
         print(df)
         return df
 
